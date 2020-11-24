@@ -1,0 +1,27 @@
+{
+  "config": {
+    "flow_title": "Aqman101: {serial_number}",
+    "step": {
+      "user": {
+        "description": "Set up your Aqman101 to integrate with Home Assistant",
+        "data" : {
+          "id" : "id for Aqman API",
+          "password" : "pwd for Aqman API"
+        }
+      },
+      "confirm": {
+        "description": "[%key:common::config_flow::description::confirm_setup%]"
+      },
+      "select": {
+        "title": "Select Aqman101 Devices that you with to connect",
+        "description": "Select Aqman101 Devices that you with to connect",
+        "data":{
+          "select_devices": "[%key:common::config_flow::device%]"
+        }
+      }
+    },
+    "error" : {
+      "cannot_connect" : "Failed to Connect to Aqman101"
+    }
+  }
+}

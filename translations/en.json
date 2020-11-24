@@ -1,0 +1,29 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured",
+            "cannot_connect": "Failed to connect"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect"
+        },
+        "step": {
+            "user": {
+                "title": "Air Quality Monitor and Network 101",
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                },
+                "description": "Fill in your Aqman login information"
+            },
+            
+            "select": {
+                "title": "Aqman101 Device Selection",
+                "description": "Select Aqman101 Devices that you with to connect",
+                "data":{
+                    "select_devices": "Select Devices"
+                }
+            }
+        }
+    }
+}
