@@ -1,0 +1,29 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "\uC774\uBBF8 \uC124\uC815 \uB2C8\uB2E4\uB418\uC5C8\uC2B5",
+            "cannot_connect": "\uC5F0\uACB0 \uC2E4\uD328"
+        },
+        "error": {
+            "cannot_connect": "\uC5F0\uACB0 \uC2E4\uD328"
+        },
+        "step": {
+            "user": {
+                "title": "Air Quality Monitor and Network 101",
+                "data": {
+                    "username": "\uC544\uC774\uB514",
+                    "password": "\uBE44\uBC00\uBC88\uD638"
+                },
+                "description": "\uB85C\uADF8\uC778 \uC815\uBCF4\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"
+            },
+            
+            "select": {
+                "title": "Aqman101 \uAE30\uAE30 \uC124\uC815",
+                "description": "\uC5F0\uACB0\uD558\uACE0 \uC2F6\uC740 Aqman101 \uAE30\uAE30\uB97C \uC120\uD0DD\uD574\uC8FC\uC138\uC694",
+                "data":{
+                    "select_devices": "\uB514\uBC14\uC774\uC2A4 \uC120\uD0DD"
+                }
+            }
+        }
+    }
+}

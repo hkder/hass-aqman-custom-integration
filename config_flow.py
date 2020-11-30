@@ -7,7 +7,6 @@ import voluptuous as vol
 
 from homeassistant.helpers import config_entry_flow
 from homeassistant.const import CONF_USERNAME, CONF_PASSWORD, CONF_DEVICES
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import ConfigFlow
 import homeassistant.helpers.config_validation as cv
@@ -95,6 +94,7 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
 
     async def _get_aqman_user(self, username: str, password: str) -> UserInfo:
         """Get device state from an Aqman 101 device"""
-        session = async_get_clientsession(self.hass)
         aqman_user: AqmanUser = AqmanUser(id=username, password=password)
-        return await aqman_user.devices_info()
+        info = await aqman_user.devices_info()
+        await aqman_user.close()
+        return info

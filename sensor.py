@@ -1,7 +1,9 @@
 """Support for Radon FtLabs Aqman101"""
 import logging
 from datetime import datetime, timedelta
+import time
 from typing import Callable, List
+import asyncio
 
 from aqman import AqmanDevice, Device, AqmanError
 import voluptuous as vol
@@ -49,7 +51,7 @@ DEFAULT_NAME = "Radon FtLabs Aqman101"
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(minutes=10)
+SCAN_INTERVAL = timedelta(seconds=600)
 
 SENSOR_TYPES = {
     "temperature": [TEMP_CELSIUS, "temperature", DEVICE_CLASS_TEMPERATURE],
@@ -98,13 +100,8 @@ async def async_setup_entry(
     entities = []
     devices = entry.data[CONF_DEVICES]
 
-    # coordinator = DataUpdateCoordinator(
-    #     hass=hass,
-    #     logger=_LOGGER,
-    #     name="sensor",
-    #     update_interval=timedelta(seconds=10),
-    #     update_method=async_update_data,
-    # )
+    username = entry.data[CONF_USERNAME]
+    password = entry.data[CONF_PASSWORD]
 
     for device in devices:
         aqman_instance: AqmanDevice = AqmanDevice(
@@ -113,10 +110,15 @@ async def async_setup_entry(
             deviceid=device,
         )
         aqman_instance_state: Device = await aqman_instance.state()
+        hass.data[DOMAIN].setdefault(device, aqman_instance_state)
         for sensor in SENSORS:
             entities.append(
-                AqmanBaseSensor(sensor, aqman_instance, aqman_instance_state)
+                AqmanBaseSensor(username, password, device, devices, sensor, hass)
             )
+
+        await aqman_instance.close()
+
+    _LOGGER.warning("%s", hass.data[DOMAIN])
 
     async_add_entities(entities)
 
@@ -126,20 +128,32 @@ class AqmanBaseSensor(Entity):
 
     def __init__(
         self,
+        username: str = None,
+        password: str = None,
+        deviceid: str = None,
+        devices: List[str] = None,
         sensor_type: str = None,
-        aqman_instance: AqmanDevice = None,
-        aqman_instance_state: Device = None,
+        hass: HomeAssistantType = None,
     ):
         """Initialize a Aqman Base Sensor Instance"""
+        self._username = username
+        self._password = password
+        self._deviceid = deviceid
+        self._devices = devices
         self._sensor_type = sensor_type
-        self._aqman_instance = aqman_instance
-        self._serial_number = aqman_instance_state.serial_number
-        self._dsm101_serial_number = aqman_instance_state.dsm101_serial_number
-        self._date_time = aqman_instance_state.date_time
-        self._is_available = True
         self._aqman_type = SENSOR_TYPES.get(self._sensor_type)[1]
-        self._state = getattr(aqman_instance_state, self._aqman_type)
-        self._device_state_attributes = {"last_update": self._date_time}
+
+        self._aqman_instance_state = hass.data[DOMAIN][deviceid]
+        self._serial_number = self._aqman_instance_state.serial_number
+        self._dsm101_serial_number = self._aqman_instance_state.dsm101_serial_number
+        self._date_time = self._aqman_instance_state.date_time
+        self._is_available = True
+        self._state = getattr(self._aqman_instance_state, self._aqman_type)
+        self._device_state_attributes = {
+            "last_update": self._date_time,
+            "value": self._state,
+        }
+        self._hass = hass
 
     @property
     def name(self):
@@ -193,15 +207,34 @@ class AqmanBaseSensor(Entity):
 
     async def async_update(self):
         """Update Aqman Sensor Entity"""
-        try:
-            state: Device = await self._aqman_instance.state()
-            _LOGGER.debug("Got new state: %s", state)
-        except AqmanError:
-            if self._is_available:
-                _LOGGER.error("An error occurred while updating Aqman101")
-            self._is_available = False
-            return
 
+        _LOGGER.warning("%s", self._aqman_type)
+
+        first_device = self._devices[0]
+
+        if self._deviceid == first_device and self._aqman_type == "temperature":
+            try:
+                for device in self._devices:
+                    aqman_instance: AqmanDevice = AqmanDevice(
+                        id=self._username,
+                        password=self._password,
+                        deviceid=self._deviceid,
+                    )
+                    state: Device = await aqman_instance.state()
+                    self._hass.data[DOMAIN][self._deviceid] = state
+
+                    await aqman_instance.close()
+            except AqmanError:
+                _LOGGER.error("An error occurred while updating Aqman101")
+                self._is_available = False
+                await aqman_instance.close()
+                return
+        else:
+            await asyncio.sleep(5)
+
+        state = self._hass.data[DOMAIN][self._deviceid]
         self._date_time = state.date_time
         self._state = getattr(state, self._aqman_type)
         self._device_state_attributes["last_update"] = self._date_time
+        self._device_state_attributes["value"] = self._state
+        _LOGGER.warning("Updated %s", self._aqman_type)

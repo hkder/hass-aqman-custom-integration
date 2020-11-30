@@ -36,22 +36,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN].setdefault(entry.entry_id, entry.data)
 
-    session = async_get_clientsession(hass)
     device_registry = await dr.async_get_registry(hass)
 
     for device in entry.data[CONF_DEVICES]:
 
-        aqman_device: Device = AqmanDevice(
+        aqman_device = AqmanDevice(
             id=entry.data[CONF_USERNAME],
             password=entry.data[CONF_PASSWORD],
             deviceid=device,
-            session=session,
         )
 
         try:
             device: Device = await aqman_device.state()
         except AqmanConnectionError as e:
             raise ConfigEntryNotReady from e
+
+        await aqman_device.close()
 
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
