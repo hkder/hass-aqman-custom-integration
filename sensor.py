@@ -51,7 +51,7 @@ DEFAULT_NAME = "Radon FtLabs Aqman101"
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=600)
+SCAN_INTERVAL = timedelta(seconds=300)
 
 SENSOR_TYPES = {
     "temperature": [TEMP_CELSIUS, "temperature", DEVICE_CLASS_TEMPERATURE],
@@ -196,20 +196,11 @@ class AqmanBaseSensor(Entity):
         return self._date_time
 
     @property
-    def should_poll(self):
-        """Return the polling state. Polling is needed."""
-        return True
-
-    @property
     def device_state_attributes(self):
         """Return the state attributes"""
         return self._device_state_attributes
 
-    async def async_update(self):
-        """Update Aqman Sensor Entity"""
-
-        _LOGGER.warning("%s", self._aqman_type)
-
+    async def update_devices(self):
         first_device = self._devices[0]
 
         if self._deviceid == first_device and self._aqman_type == "temperature":
@@ -218,10 +209,10 @@ class AqmanBaseSensor(Entity):
                     aqman_instance: AqmanDevice = AqmanDevice(
                         id=self._username,
                         password=self._password,
-                        deviceid=self._deviceid,
+                        deviceid=device,
                     )
                     state: Device = await aqman_instance.state()
-                    self._hass.data[DOMAIN][self._deviceid] = state
+                    self._hass.data[DOMAIN][device] = state
 
                     await aqman_instance.close()
             except AqmanError:
@@ -230,11 +221,16 @@ class AqmanBaseSensor(Entity):
                 await aqman_instance.close()
                 return
         else:
-            await asyncio.sleep(5)
+            await asyncio.sleep(2)
 
-        state = self._hass.data[DOMAIN][self._deviceid]
+        return self._hass.data[DOMAIN][self._deviceid]
+
+    async def async_update(self):
+        """Update Aqman Sensor Entity"""
+        state = await self.update_devices()
+
+        _LOGGER.warning("Updated %s-%s === %s", self._deviceid, self._aqman_type, state)
         self._date_time = state.date_time
         self._state = getattr(state, self._aqman_type)
         self._device_state_attributes["last_update"] = self._date_time
         self._device_state_attributes["value"] = self._state
-        _LOGGER.warning("Updated %s", self._aqman_type)
