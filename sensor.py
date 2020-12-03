@@ -8,6 +8,7 @@ import asyncio
 from aqman import AqmanDevice, Device, AqmanError
 import voluptuous as vol
 
+from homeassistant.helpers import device_registry as dr
 from homeassistant.components.air_quality import PLATFORM_SCHEMA
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity import Entity
@@ -118,7 +119,7 @@ async def async_setup_entry(
 
         await aqman_instance.close()
 
-    _LOGGER.warning("%s", hass.data[DOMAIN])
+    # _LOGGER.warning("%s", hass.data[DOMAIN])
 
     async_add_entities(entities)
 
@@ -146,6 +147,7 @@ class AqmanBaseSensor(Entity):
         self._aqman_instance_state = hass.data[DOMAIN][deviceid]
         self._serial_number = self._aqman_instance_state.serial_number
         self._dsm101_serial_number = self._aqman_instance_state.dsm101_serial_number
+        self._fw_version = self._aqman_instance_state.firmware_version
         self._date_time = self._aqman_instance_state.date_time
         self._is_available = True
         self._state = getattr(self._aqman_instance_state, self._aqman_type)
@@ -164,6 +166,25 @@ class AqmanBaseSensor(Entity):
     def unique_id(self):
         """Return a unique ID."""
         return f"{self._serial_number}.{self._aqman_type}"
+
+    @property
+    def device_id(self) -> str:
+        """Return the device id"""
+        return self._deviceid
+
+    @property
+    def device_info(self):
+        """Return the device info of the Aqman101 device."""
+        device_info = {
+            "connections": {(dr.CONNECTION_NETWORK_MAC, self._serial_number)},
+            "identifiers": {(DOMAIN, self._serial_number)},
+            "manufacturer": "Radon FTLabs",
+            "model": "aqman101",
+            "name": f"{self._serial_number}",
+            "sw_version": f"{self._fw_version}",
+            # "via_device":
+        }
+        return device_info
 
     @property
     def available(self):
@@ -229,7 +250,7 @@ class AqmanBaseSensor(Entity):
         """Update Aqman Sensor Entity"""
         state = await self.update_devices()
 
-        _LOGGER.warning("Updated %s-%s === %s", self._deviceid, self._aqman_type, state)
+        # _LOGGER.warning("Updated %s-%s === %s", self._deviceid, self._aqman_type, state)
         self._date_time = state.date_time
         self._state = getattr(state, self._aqman_type)
         self._device_state_attributes["last_update"] = self._date_time
