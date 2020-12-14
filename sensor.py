@@ -52,7 +52,7 @@ DEFAULT_NAME = "Radon FtLabs Aqman101"
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=300)
+SCAN_INTERVAL = timedelta(seconds=2)
 
 SENSOR_TYPES = {
     "temperature": [TEMP_CELSIUS, "temperature", DEVICE_CLASS_TEMPERATURE],
@@ -238,20 +238,22 @@ class AqmanBaseSensor(Entity):
                     await aqman_instance.close()
             except AqmanError:
                 _LOGGER.error("An error occurred while updating Aqman101")
-                self._is_available = False
                 await aqman_instance.close()
                 return
         else:
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
 
         return self._hass.data[DOMAIN][self._deviceid]
 
     async def async_update(self):
         """Update Aqman Sensor Entity"""
         state = await self.update_devices()
-
-        # _LOGGER.warning("Updated %s-%s === %s", self._deviceid, self._aqman_type, state)
-        self._date_time = state.date_time
-        self._state = getattr(state, self._aqman_type)
-        self._device_state_attributes["last_update"] = self._date_time
-        self._device_state_attributes["value"] = self._state
+        try:
+            # _LOGGER.warning("Updated %s-%s === %s", self._deviceid, self._aqman_type, state)
+            self._date_time = state.date_time
+            self._state = getattr(state, self._aqman_type)
+            self._device_state_attributes["last_update"] = self._date_time
+            self._device_state_attributes["value"] = self._state
+        except AttributeError:
+            # Meaning that state is None
+            pass
