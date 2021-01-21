@@ -33,10 +33,7 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
             return self._show_setup_form()
 
         try:
-            user: UserInfo = await self._get_aqman_user(
-                user_input[CONF_USERNAME],
-                user_input[CONF_PASSWORD],
-            )
+            user: UserInfo = await self._get_aqman_user()
         except AqmanError:
             return self._show_setup_form({"base": "cannot_connect"})
 
@@ -60,8 +57,6 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=self.user.username.upper(),
             data={
-                CONF_USERNAME: self.user.username,
-                CONF_PASSWORD: self.user.password,
                 CONF_DEVICES: user_input["select_devices"],
             },
         )
@@ -92,9 +87,9 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
             errors=errors or {},
         )
 
-    async def _get_aqman_user(self, username: str, password: str) -> UserInfo:
+    async def _get_aqman_user(self) -> UserInfo:
         """Get device state from an Aqman 101 device"""
-        aqman_user: AqmanUser = AqmanUser(id=username, password=password)
+        aqman_user: AqmanUser = AqmanUser()
         info = await aqman_user.devices_info()
         await aqman_user.close()
         return info

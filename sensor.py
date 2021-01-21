@@ -101,21 +101,14 @@ async def async_setup_entry(
     entities = []
     devices = entry.data[CONF_DEVICES]
 
-    username = entry.data[CONF_USERNAME]
-    password = entry.data[CONF_PASSWORD]
-
     for device in devices:
         aqman_instance: AqmanDevice = AqmanDevice(
-            id=entry.data[CONF_USERNAME],
-            password=entry.data[CONF_PASSWORD],
             deviceid=device,
         )
         aqman_instance_state: Device = await aqman_instance.state()
         hass.data[DOMAIN].setdefault(device, aqman_instance_state)
         for sensor in SENSORS:
-            entities.append(
-                AqmanBaseSensor(username, password, device, devices, sensor, hass)
-            )
+            entities.append(AqmanBaseSensor(device, devices, sensor, hass))
 
         await aqman_instance.close()
 
@@ -129,16 +122,12 @@ class AqmanBaseSensor(Entity):
 
     def __init__(
         self,
-        username: str = None,
-        password: str = None,
         deviceid: str = None,
         devices: List[str] = None,
         sensor_type: str = None,
         hass: HomeAssistantType = None,
     ):
         """Initialize a Aqman Base Sensor Instance"""
-        self._username = username
-        self._password = password
         self._deviceid = deviceid
         self._devices = devices
         self._sensor_type = sensor_type
@@ -228,8 +217,6 @@ class AqmanBaseSensor(Entity):
             try:
                 for device in self._devices:
                     aqman_instance: AqmanDevice = AqmanDevice(
-                        id=self._username,
-                        password=self._password,
                         deviceid=device,
                     )
                     state: Device = await aqman_instance.state()

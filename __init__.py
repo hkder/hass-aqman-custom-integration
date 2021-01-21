@@ -39,20 +39,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     device_registry = await dr.async_get_registry(hass)
 
     for device in entry.data[CONF_DEVICES]:
-
-        # aqman_device = AqmanDevice(
-        #     id=entry.data[CONF_USERNAME],
-        #     password=entry.data[CONF_PASSWORD],
-        #     deviceid=device,
-        # )
-
-        # try:
-        #     device: Device = await aqman_device.state()
-        # except AqmanConnectionError as e:
-        #     raise ConfigEntryNotReady from e
-
-        # await aqman_device.close()
-
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             connections={(dr.CONNECTION_NETWORK_MAC, device)},
@@ -60,7 +46,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             manufacturer="Radon FTLabs",
             name=device,
             model="aqman101",
-            # sw_version=device.firmware_version,
         )
 
     hass.async_create_task(
