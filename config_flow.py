@@ -24,6 +24,7 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
     def __init__(self):
         """Initialize"""
         self.user = None
+        self.username = None
 
     async def async_step_user(
         self, user_input: Optional[ConfigType] = None
@@ -31,6 +32,8 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
         """Handle a flow initiated by the user."""
         if user_input is None:
             return self._show_setup_form()
+
+        self.username = user_input[CONF_USERNAME]
 
         try:
             user: UserInfo = await self._get_aqman_user()
@@ -55,7 +58,7 @@ class AqmanFlowHandler(ConfigFlow, domain=DOMAIN):
         _LOGGER.warning(user_input["select_devices"])
 
         return self.async_create_entry(
-            title=self.user.username.upper(),
+            title=self.username.upper(),
             data={
                 CONF_DEVICES: user_input["select_devices"],
             },

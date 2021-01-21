@@ -29,8 +29,6 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Aqman101 from a config entry."""
 
-    username = entry.data[CONF_USERNAME]
-    password = entry.data[CONF_PASSWORD]
     devices = entry.data[CONF_DEVICES]
 
     hass.data.setdefault(DOMAIN, {})
